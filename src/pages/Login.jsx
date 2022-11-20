@@ -1,15 +1,14 @@
-import styled from "styled-components";
-import {mobile} from "../responsive";
+import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import styled from 'styled-components';
+import { login } from '../app/apiCalls';
+import { mobile } from '../responsive';
 
 const Container = styled.div`
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(
-      rgba(255, 255, 255, 0.5),
-      rgba(255, 255, 255, 0.5)
-    ),
-    url("https://images.pexels.com/photos/6984650/pexels-photo-6984650.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940")
-      center;
+  background: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
+    url('https://images.pexels.com/photos/6984650/pexels-photo-6984650.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940') center;
   background-size: cover;
   display: flex;
   align-items: center;
@@ -20,7 +19,7 @@ const Wrapper = styled.div`
   width: 25%;
   padding: 20px;
   background-color: white;
-  ${mobile({ width: "75%" })}
+  ${mobile({ width: '75%' })}
 `;
 
 const Title = styled.h1`
@@ -48,6 +47,12 @@ const Button = styled.button`
   color: white;
   cursor: pointer;
   margin-bottom: 10px;
+
+  &:disabled {
+    color: 'green';
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 const Link = styled.a`
@@ -57,15 +62,32 @@ const Link = styled.a`
   cursor: pointer;
 `;
 
+const Error = styled.small`
+  color: crimson;
+`;
+
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const dispatch = useDispatch();
+  const { isFetching, error } = useSelector((state) => state.user);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    login(dispatch, { email, password });
+  };
+
   return (
     <Container>
       <Wrapper>
         <Title>SIGN IN</Title>
         <Form>
-          <Input placeholder="username" />
-          <Input placeholder="password" />
-          <Button>LOGIN</Button>
+          <Input placeholder='email' onChange={(e) => setEmail(e.target.value)} />
+          <Input placeholder='password' onChange={(e) => setPassword(e.target.value)} />
+          <Button onClick={handleLogin} disabled={!email || !password || isFetching}>
+            {isFetching ? 'loggin in' : 'LOGIN'}
+          </Button>
+          {error && <Error>Ops! Login Failed</Error>}
           <Link>DO NOT YOU REMEMBER THE PASSWORD?</Link>
           <Link>CREATE A NEW ACCOUNT</Link>
         </Form>

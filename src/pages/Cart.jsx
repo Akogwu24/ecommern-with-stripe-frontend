@@ -1,15 +1,23 @@
-import { Add, Remove } from "@material-ui/icons";
-import styled from "styled-components";
-import Announcement from "../components/Announcement";
-import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
-import { mobile } from "../responsive";
+import { Add, Remove } from '@material-ui/icons';
+import styled from 'styled-components';
+import Announcement from '../components/Announcement';
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
+import { mobile } from '../responsive';
+import { useSelector } from 'react-redux';
+import StripeCheckout from 'react-stripe-checkout';
+import { useState, useEffect } from 'react';
+import http from '../services/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { nanoid } from '@reduxjs/toolkit';
+
+const stripeKey = 'pk_test_51Lzt5VFEYYNTBNEej1emo9PvzPRHnacXbvTnlgxemGPeU22hwAN8fL3JFVvKd1aqcnEhcDJIGkMeirgzbuVAxa8Q00izDkWbjK';
 
 const Container = styled.div``;
 
 const Wrapper = styled.div`
   padding: 20px;
-  ${mobile({ padding: "10px" })}
+  ${mobile({ padding: '10px' })}
 `;
 
 const Title = styled.h1`
@@ -28,14 +36,13 @@ const TopButton = styled.button`
   padding: 10px;
   font-weight: 600;
   cursor: pointer;
-  border: ${(props) => props.type === "filled" && "none"};
-  background-color: ${(props) =>
-    props.type === "filled" ? "black" : "transparent"};
-  color: ${(props) => props.type === "filled" && "white"};
+  border: ${(props) => props.type === 'filled' && 'none'};
+  background-color: ${(props) => (props.type === 'filled' ? 'black' : 'transparent')};
+  color: ${(props) => props.type === 'filled' && 'white'};
 `;
 
 const TopTexts = styled.div`
-  ${mobile({ display: "none" })}
+  ${mobile({ display: 'none' })}
 `;
 const TopText = styled.span`
   text-decoration: underline;
@@ -46,8 +53,7 @@ const TopText = styled.span`
 const Bottom = styled.div`
   display: flex;
   justify-content: space-between;
-  ${mobile({ flexDirection: "column" })}
-
+  ${mobile({ flexDirection: 'column' })}
 `;
 
 const Info = styled.div`
@@ -57,7 +63,7 @@ const Info = styled.div`
 const Product = styled.div`
   display: flex;
   justify-content: space-between;
-  ${mobile({ flexDirection: "column" })}
+  ${mobile({ flexDirection: 'column' })}
 `;
 
 const ProductDetail = styled.div`
@@ -106,13 +112,13 @@ const ProductAmountContainer = styled.div`
 const ProductAmount = styled.div`
   font-size: 24px;
   margin: 5px;
-  ${mobile({ margin: "5px 15px" })}
+  ${mobile({ margin: '5px 15px' })}
 `;
 
 const ProductPrice = styled.div`
   font-size: 30px;
   font-weight: 200;
-  ${mobile({ marginBottom: "20px" })}
+  ${mobile({ marginBottom: '20px' })}
 `;
 
 const Hr = styled.hr`
@@ -137,8 +143,8 @@ const SummaryItem = styled.div`
   margin: 30px 0px;
   display: flex;
   justify-content: space-between;
-  font-weight: ${(props) => props.type === "total" && "500"};
-  font-size: ${(props) => props.type === "total" && "24px"};
+  font-weight: ${(props) => props.type === 'total' && '500'};
+  font-size: ${(props) => props.type === 'total' && '24px'};
 `;
 
 const SummaryItemText = styled.span``;
@@ -154,6 +160,33 @@ const Button = styled.button`
 `;
 
 const Cart = () => {
+  const cart = useSelector((state) => state.cart);
+  const [stripeToken, setStripeToken] = useState(null);
+  const navigate = useNavigate();
+
+  const onToken = async (token) => {
+    if (!cart.products.length) return alert('Please add Products to ypur Cart first');
+    setStripeToken(token);
+
+    // await Http.post
+  };
+
+  useEffect(() => {
+    const makeRequest = async () => {
+      try {
+        const { data } = await http.post('/payment', { tokenId: stripeToken.id, amount: cart.total * 100 || 5000 });
+        console.log('data', data);
+
+        navigate('/success', { state: data });
+      } catch (error) {
+        console.log('error', error);
+      }
+    };
+
+    stripeToken && makeRequest();
+  }, [stripeToken, navigate, cart.total]);
+
+  console.log('stripeToken', stripeToken);
   return (
     <Container>
       <Navbar />
@@ -161,86 +194,78 @@ const Cart = () => {
       <Wrapper>
         <Title>YOUR BAG</Title>
         <Top>
-          <TopButton>CONTINUE SHOPPING</TopButton>
+          <Link to='/product'>
+            <TopButton>CONTINUE SHOPPING</TopButton>
+          </Link>
           <TopTexts>
             <TopText>Shopping Bag(2)</TopText>
             <TopText>Your Wishlist (0)</TopText>
           </TopTexts>
-          <TopButton type="filled">CHECKOUT NOW</TopButton>
+          {/* <TopButton type='filled'>CHECKOUT NOW</TopButton> */}
         </Top>
         <Bottom>
           <Info>
-            <Product>
-              <ProductDetail>
-                <Image src="https://hips.hearstapps.com/vader-prod.s3.amazonaws.com/1614188818-TD1MTHU_SHOE_ANGLE_GLOBAL_MENS_TREE_DASHERS_THUNDER_b01b1013-cd8d-48e7-bed9-52db26515dc4.png?crop=1xw:1.00xh;center,top&resize=480%3A%2A" />
-                <Details>
-                  <ProductName>
-                    <b>Product:</b> JESSIE THUNDER SHOES
-                  </ProductName>
-                  <ProductId>
-                    <b>ID:</b> 93813718293
-                  </ProductId>
-                  <ProductColor color="black" />
-                  <ProductSize>
-                    <b>Size:</b> 37.5
-                  </ProductSize>
-                </Details>
-              </ProductDetail>
-              <PriceDetail>
-                <ProductAmountContainer>
-                  <Add />
-                  <ProductAmount>2</ProductAmount>
-                  <Remove />
-                </ProductAmountContainer>
-                <ProductPrice>$ 30</ProductPrice>
-              </PriceDetail>
-            </Product>
-            <Hr />
-            <Product>
-              <ProductDetail>
-                <Image src="https://i.pinimg.com/originals/2d/af/f8/2daff8e0823e51dd752704a47d5b795c.png" />
-                <Details>
-                  <ProductName>
-                    <b>Product:</b> HAKURA T-SHIRT
-                  </ProductName>
-                  <ProductId>
-                    <b>ID:</b> 93813718293
-                  </ProductId>
-                  <ProductColor color="gray" />
-                  <ProductSize>
-                    <b>Size:</b> M
-                  </ProductSize>
-                </Details>
-              </ProductDetail>
-              <PriceDetail>
-                <ProductAmountContainer>
-                  <Add />
-                  <ProductAmount>1</ProductAmount>
-                  <Remove />
-                </ProductAmountContainer>
-                <ProductPrice>$ 20</ProductPrice>
-              </PriceDetail>
-            </Product>
+            {cart.products.map((product) => (
+              <>
+                <Product key={nanoid()}>
+                  <ProductDetail>
+                    <Image src={product.img} />
+                    <Details>
+                      <ProductName>
+                        <b>Product:</b> {product.title}
+                      </ProductName>
+                      <ProductId>
+                        <b>ID:</b> {product._id}
+                      </ProductId>
+                      {product.color ? <ProductColor color={product.color} /> : 'Any Color'}
+                      <ProductSize>
+                        <b>Size:</b> {product.size}
+                      </ProductSize>
+                    </Details>
+                  </ProductDetail>
+                  <PriceDetail>
+                    <ProductAmountContainer>
+                      <Add />
+                      <ProductAmount>{product.quantity}</ProductAmount>
+                      <Remove />
+                    </ProductAmountContainer>
+                    <ProductPrice>NGN {product.price * product.quantity}</ProductPrice>
+                  </PriceDetail>
+                </Product>
+                <Hr />
+              </>
+            ))}
           </Info>
           <Summary>
             <SummaryTitle>ORDER SUMMARY</SummaryTitle>
             <SummaryItem>
               <SummaryItemText>Subtotal</SummaryItemText>
-              <SummaryItemPrice>$ 80</SummaryItemPrice>
+              <SummaryItemPrice>NGN {cart.total}</SummaryItemPrice>
             </SummaryItem>
             <SummaryItem>
               <SummaryItemText>Estimated Shipping</SummaryItemText>
-              <SummaryItemPrice>$ 5.90</SummaryItemPrice>
+              <SummaryItemPrice>NGN 490</SummaryItemPrice>
             </SummaryItem>
             <SummaryItem>
               <SummaryItemText>Shipping Discount</SummaryItemText>
-              <SummaryItemPrice>$ -5.90</SummaryItemPrice>
+              <SummaryItemPrice>NGN 490</SummaryItemPrice>
             </SummaryItem>
-            <SummaryItem type="total">
+            <SummaryItem type='total'>
               <SummaryItemText>Total</SummaryItemText>
-              <SummaryItemPrice>$ 80</SummaryItemPrice>
+              <SummaryItemPrice>NGN {cart.total}</SummaryItemPrice>
             </SummaryItem>
-            <Button>CHECKOUT NOW</Button>
+            <StripeCheckout
+              name='EMAK Stores'
+              billingAddress
+              shippingAddress
+              description={`Your total is NGN ${cart.total}`}
+              amount={cart.total * 100}
+              token={onToken}
+              stripeKey={stripeKey}
+              image='https://avatars.githubusercontent.com/u/66435564?s=400&u=1426f24fb05571bf3f9e64285f74bf0a03245809&v=4'
+            >
+              <Button>CHECKOUT NOW</Button>
+            </StripeCheckout>
           </Summary>
         </Bottom>
       </Wrapper>
